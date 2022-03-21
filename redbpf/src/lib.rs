@@ -1835,6 +1835,13 @@ impl Map {
             error!("error on bpf_obj_get: {}", io::Error::last_os_error());
             return Err(Error::IO(io::Error::last_os_error()));
         }
+        let mut map = Map::from_fd(fd)?;
+        map.pin_file = Some(Box::from(file));
+        Ok(map)
+    }
+
+    /// Create `Map` from an fd which represents a map (which can be obtained using tc's export functionality)
+    pub fn from_fd(fd: RawFd) -> Result<Map> {
         let map_info = unsafe {
             let mut info = mem::zeroed::<bpf_map_info>();
             let mut info_len = mem::size_of_val(&info) as u32;
@@ -1867,7 +1874,7 @@ impl Map {
                 map_flags: map_info.map_flags,
             },
             section_data: false,
-            pin_file: Some(Box::from(file)),
+            pin_file: None,
         })
     }
 
